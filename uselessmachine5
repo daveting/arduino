@@ -1,0 +1,376 @@
+#include <Servo.h> 
+Servo doorServo;          // servo to open latch
+Servo handServo;          // servo for moving arm
+Servo waveServo;          // servo for wave
+
+
+// Pin Attachment Summary
+// pin 2 = switch 
+// pin 3 = PIR Sensor 
+// pin 8 = servo wave
+// pin 9 = servo door
+// pin 10 = servo arm
+// pin 12 = LED
+// PIR Motion Sensor variables
+
+// Declaring variables
+int switchPin = 2;               //set switch on pin 2
+int inputPin = 3;                 //set PIR to pin 3
+int pirState = LOW;             // we start, assuming no motion detected
+int val = 0;
+int ledPin = 12;                // set LED to 12
+int pos = 0;
+int selectedMove = 0;             //move selector
+int countMove = 0;                 //counter for button press. 
+//int sDoorMin = 0;                 // set door Servo hiding position
+//int sDoorMax = 60;                // set door Servo fully open position
+//int sHandMin = 0;                   // set hand Servo hiding position
+//int sHandMax = 135;                 // set hand Servo striking position
+//int sWaveMin = 90;                   // set hand Servo hiding position
+//int sWaveMax = 0;                 // set hand Servo striking position
+
+long startTime;
+long duration;
+long endTime = 0;
+
+
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(ledPin, OUTPUT);      // declare LED as output
+  pinMode(switchPin, INPUT);   // declare switch as input
+  pinMode(inputPin, INPUT);     // declare PIR sensor as input
+  waveServo.attach(8);           //set wave servo on Pin 8 pwm
+  doorServo.attach(9);           //set door servo on Pin 9 pwm
+  handServo.attach(10);          //set hand servo on Pin 10 pwm
+  waveServo.write(120);            //set wave to hiding position
+  doorServo.write(0);           //set door to hiding position 
+  handServo.write(0);            //set hand to hiding position
+}
+
+
+void loop()
+{
+  
+  //----------------------USING PIR SENSOR------------------------
+  val = digitalRead(inputPin);  // read PIR input value
+  if (val == HIGH) {            // check if the input is HIGH
+     if (pirState == LOW) {            // we have just turned on
+//      Serial.println("Motion detected!");
+      digitalWrite(ledPin, HIGH);   // sets the LED on
+      pirState = HIGH;
+      }
+      } else {
+   
+    if (pirState == HIGH){           // we have just turned off
+      
+//      Serial.println("Motion ended!");
+      offLED(); 
+      pirState = LOW;
+      
+    }
+  }
+  
+//---------- MOVEMENT OF SERVO ARM ------------------------------  
+//if the switch is on, then move door and hand to switch it off...
+if(digitalRead(switchPin) == HIGH)    //Switch is on
+{
+  selectedMove = random(12);       //Generates a random number from 0 - 11
+  
+  onLED();   // sets the LED on
+  startTime = millis();                 //Get time in ms
+  duration = startTime - endTime;       // calculate duration
+  endTime = startTime;                  //Store the current time as the endTime
+//  
+//  Serial.println(startTime);
+//  Serial.print("Duration: ");
+//  Serial.println(duration);
+//  selectedMove = 11;               //for debugging
+//  Serial.println(selectedMove);    //Print on serial monitor for debugging purposes
+  countMove++;                     //start counter
+  //Serial.println("Move");
+  //Serial.println(countMove);
+    
+  if (duration <= 2000) { rapidFire(); }                              // as long as duration is less then 2 sec it will rapid fire.
+  else if (selectedMove == 0) { smartMove1(); }  
+  else if (selectedMove == 1) { smartMove1(); }   
+  else if (selectedMove == 2) { smartMove2(); }
+  else if (selectedMove == 3) { smartMove3(); }
+  else if (selectedMove == 4) { smartMove4(); }
+  else if (selectedMove == 5) { smartMove5(); }
+  else if (selectedMove == 6) { smartMove6(); }
+  else if (selectedMove == 7) { smartMove7(); }
+  else if (selectedMove == 8) { smartMove8(); }
+  else if (selectedMove == 9) { smartMove9(); }
+  else if (selectedMove == 10) { smartMove10(); }
+  else if (selectedMove == 11 && countMove > 9) { crazysurrender(); }
+   
+  if (countMove == 17) {               //reset countMove to zero
+   countMove = 0;
+  } 
+  
+}
+}
+
+
+// Library of moves
+// Door Moves
+   void sDoorOpen(int x, int y, int sDoorMin,int sDoorMax)                      // x = rotation rate, y = delay in miniseconds, sDoorMin, sDoorMax
+   {
+     for(pos = sDoorMin; pos < sDoorMax; pos += x)   
+    {                                   
+    doorServo.write(pos);              
+    delay(y);                       
+    }
+   }
+   void sDoorClose(int x, int y, int sDoorMin,int sDoorMax)
+   {
+     for(pos = sDoorMax; pos >= sDoorMin; pos-=x)     
+    {                                
+    doorServo.write(pos);              
+    delay(y);                      
+    } 
+   }  
+//Hand Moves   
+  void sHandForward(int x, int y, int sHandMin, int sHandMax)                   // x = rotation rate, y = delay in miliseconds, minHand position, maxHand position
+ {
+  for(pos = sHandMin; pos < sHandMax; pos += x)  
+    {                                   
+    handServo.write(pos);               
+    delay(y);                       
+    }  
+  } 
+   
+  void sHandBack(int x, int y, int sHandMin, int sHandMax)
+ {
+   for(pos = sHandMax; pos >= sHandMin; pos -= x)      
+    {                                
+    handServo.write(pos);               
+    delay(y);                        
+    } 
+ }
+
+//Wave Servo - Servo mount opposite.. moving clockwise so the sWaveForward and sWaveBack is opposite from other servos.
+ void sWaveBack(int x, int y, int sWaveMin, int sWaveMax)                   // x = rotation rate, y = delay in miliseconds, minWave position, maxWave position
+ {
+  for(pos = sWaveMin; pos < sWaveMax; pos += x)  
+    {                                   
+    waveServo.write(pos);               
+    delay(y);                       
+    }  
+  } 
+   
+  void sWaveForward(int x, int y, int sWaveMin, int sWaveMax)
+ {
+   for(pos = sWaveMax; pos >= sWaveMin; pos -= x)      
+    {                                
+    waveServo.write(pos);               
+    delay(y);                        
+    } 
+ }
+ 
+// basic move quick and easy
+  void smartMove1() 
+   {    
+    sDoorOpen(5,15,0,60);           //Open door
+    sHandForward(5,15,0,140);         //Move hand
+    offLED();                         //LED off
+    sHandBack(5,15,0,140);            //Retract hand
+    sDoorClose(5,15,0,60);          //close door
+   } 
+     
+// open and wait, then move hand and wait, then switch off and hide  
+  void smartMove2()
+   {
+    sDoorOpen(3,15,0,60);           //Open door and wait
+    delay(800); 
+    sHandForward(4,15,0,100);         //Move hand almost reaching and stop
+    delay(1000);                      
+    sHandForward(4,15,100,140);       //Move forward again and toggle switch
+    offLED();
+    sHandBack(5,15,0,140);            //Retract hand
+    sDoorClose(3,15,0,60);
+   }
+  
+//move 3: open door then close it many times, wait, then quickly reopen and switch off and hide.
+  void smartMove3()
+  {
+    sDoorOpen(3,15,0,45);       
+    sDoorClose(5,15,0,45);
+    sDoorOpen(3,15,0,40);
+    sDoorClose(5,15,0,40);
+    delay(300);
+    sDoorOpen(3,15,0,45);
+    sDoorClose(5,15,0,45);
+    delay(700);
+    sDoorOpen(8,15,0,60);             //Opens door fully and fast
+    sHandForward(3,15,0,140);        //Hand forward
+    offLED();
+    sHandBack(3,15,0,140);           //Hand retract
+    sDoorClose(15,15,0,60);
+  }   
+
+// move 4: open door, then move hand very slowly forward and back to hiding very slowly, then quickly close door
+ void smartMove4()
+ {
+   sDoorOpen(1,30,0,60);
+   sHandForward(1,30,0,140);
+   offLED();
+   sHandBack(1,30,0,140);
+   sDoorClose(1,30,45,60);
+   sDoorClose(4,15,0,45);
+ }
+ 
+//move 5:
+ void smartMove5() 
+ {
+   sDoorOpen(3,15,0,60);
+   sHandForward(1,15,0,70);
+   delay(800);
+   sDoorClose(3,15,40,60);
+   sDoorOpen(3,15,40,60);
+   sDoorClose(3,15,40,60);
+   sDoorOpen(3,15,40,60);
+   handServo.write(40);
+   delay(1000);
+   sHandForward(4,15,40,140);
+   offLED();
+   sHandBack(4,15,0,140);
+   sDoorClose(1,15,0,60);
+ } 
+
+void smartMove6()
+{
+   sDoorOpen(3,15,0,60);
+   sHandForward(4,15,0,140);
+   offLED();
+   sDoorClose(3,15,50,60);
+   delay(2000);
+   onLED();
+   sDoorOpen(3,15,50,60);
+   delay(500);
+   offLED();
+   sHandBack(4,15,0,140);
+   sDoorClose(3,15,0,60);
+ }
+ 
+// move ala Matrix   
+ void smartMove7()
+{
+  sDoorOpen(3,15,0,60);
+  sHandForward(4,15,0,80);
+  sHandForward(1,30,80,140);
+  offLED();
+  sHandBack(4,10,0,140);
+  sDoorClose(3,15,0,60);
+}
+
+  void smartMove8() 
+  {  
+   sDoorOpen(1,30,0,50);
+   delay(2000);
+   sHandForward(1,30,0,40);
+   delay(500);
+   sDoorOpen(4,15,50,60);
+   delay(100);
+   sHandForward(4,15,40,90);
+   delay(500);
+   sHandBack(4,15,70,90);
+   delay(100);
+   sHandForward(4,15,70,90);
+   delay(100);
+   sHandBack(4,15,70,90);
+   delay(100);
+   sHandForward(4,15,90,140);
+   offLED();                                      // LED off
+   delay(100);
+   sHandForward(4,15,70,120);
+   sHandBack(4,15,0,140);
+   sDoorClose(3,15,0,60);
+  } 
+   
+   
+   void smartMove9() 
+   {    
+    sDoorOpen(3,15,0,60);
+    delay(2000);
+    sHandForward(4,15,0,140);
+    sHandBack(4,15,0,140);
+    offLED();
+    sDoorClose(3,15,0,60);
+   } 
+   
+   // Special knock rhythm "Shave and a haircut" "two bits" or "dah-di-di-dah-di, di-dit"
+   void smartMove10() 
+   {    
+    sDoorOpen(3,15,0,60);
+    delay(200);
+    handServo.write(0);
+    delay(400);
+    handServo.write(18);
+    delay(400);
+    handServo.write(36);
+    delay(200);
+    handServo.write(54);
+    delay(200);
+    handServo.write(72);
+    delay(400);
+    handServo.write(90);
+    delay(800);
+    handServo.write(108);
+    delay(400);
+    handServo.write(140);
+    delay(1000);
+    offLED();
+    sHandBack(4,15,0,140);
+    sDoorClose(3,15,0,60);
+   } 
+   
+    void rapidFire() 
+   {    
+    doorServo.write(60);
+    delay(250);
+    handServo.write(140);
+    delay(250);
+    offLED();
+    handServo.write(0);
+    delay(250);
+    doorServo.write(0);
+    } 
+    void crazysurrender() 
+   {    
+   //Moving door
+   sDoorOpen(10,5,0,80);
+   delay(5000); 
+   
+   sWaveForward(3,150,50,120);
+   delay(400);
+   sWaveForward(4,30,20,50);
+   sWaveBack(4,30,20,50);
+   sWaveForward(4,30,20,50);
+   sWaveBack(4,30,20,50);
+   sWaveForward(4,30,20,50);
+   sWaveBack(4,30,20,50);
+   delay(500);
+   sWaveBack(4,150,50,120);
+
+   sDoorClose(4,150,0,60);
+   delay(5000);
+   sDoorOpen(4,15,0,60);
+   sHandForward(4,15,0,140);
+   offLED();
+   sHandBack(4,15,0,140);
+   sDoorClose(5,15,0,60);
+  } 
+   
+   // Turns LED ON
+   void onLED() 
+   {
+      digitalWrite(ledPin, HIGH);   // sets the LED on
+   }    
+   
+   // Turns LED OFF
+   void offLED() 
+   {
+      digitalWrite(ledPin, LOW);   // sets the LED off
+   }    
