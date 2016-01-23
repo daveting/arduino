@@ -1,0 +1,79 @@
+/*
+ * ATtiny85 chip with RGB LED and PIR Sensor
+ * DavidTing 2015 using C to define ledPin
+ * 
+ */
+// Assign LED pins
+#define RED PB1     //Digital Pin0 - physical pin 5
+#define BLUE PB0    //Digital Pin1 - physical pin 6
+#define GREEN PB2   //Digital Pin2 - physical pin 7
+
+//Assign Analog input pins
+int pirPin = 3;     // Pin3 (analog input 3) - physical pin 2 on ATTiny85
+int ldrPin = 2;     // Pin4 (analog input 2) - physical pin 3 on ATTiny85
+int delayTime = 20;
+int pirState = LOW;
+int val = 0;
+int redVal;
+int blueVal;
+int greenVal;
+int sensorthr = 0;
+
+void setup() {
+  pinMode(RED, OUTPUT);
+  pinMode(BLUE, OUTPUT);
+  pinMode(GREEN, OUTPUT);
+  pinMode(pirPin, INPUT);
+  pinMode(ldrPin, INPUT);
+}
+
+void loop() {
+  val = digitalRead(pirPin);
+  sensorthr = analogRead(ldrPin);
+ 
+  if (val == HIGH && sensorthr < 300) {
+     int redVal = 255;
+     int blueVal = 0;
+     int greenVal = 0;
+  for( int i = 0 ; i < 255 ; i += 1 ){
+    greenVal += 1;
+    redVal -= 1;
+    analogWrite( GREEN, 255 - greenVal );
+    analogWrite( RED, 255 - redVal );
+    delay( delayTime );
+  }
+ 
+  redVal = 0;
+  blueVal = 0;
+  greenVal = 255;
+  for( int i = 0 ; i < 255 ; i += 1 ){
+    blueVal += 1;
+    greenVal -= 1;
+    analogWrite( BLUE, 255 - blueVal );
+    analogWrite( GREEN, 255 - greenVal );
+    delay( delayTime );
+  }
+ 
+  redVal = 0;
+  blueVal = 255;
+  greenVal = 0;
+  for( int i = 0 ; i < 255 ; i += 1 ){
+    redVal += 1;
+    blueVal -= 1;
+    analogWrite( RED, 255 - redVal );
+    analogWrite( BLUE, 255 - blueVal );
+    delay( delayTime );
+  }
+  
+
+
+} else {
+      digitalWrite(GREEN, LOW);
+      digitalWrite(BLUE, LOW);
+      digitalWrite(RED, LOW);
+      delay(300);    
+
+  }
+
+
+}
